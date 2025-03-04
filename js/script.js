@@ -4,6 +4,7 @@ var w = 30;
 var grid = [];
 var current;
 var stack = [];
+let solutionPath = []; // Store clean path from start to end
 
 // Timer and game state variables
 let startTime;
@@ -13,61 +14,73 @@ let endCell;
 const countdownDuration = 600;
 let path = [];
 let reachedEnd = false;
+let moveCount = 0; // Track player moves
 
 // Player position
 let playerX, playerY;  // X = col (left-right), Y = row (top-bottom)
 let blinkState = true;
 let blinkTimer = 0;
 
+// Animation variables
+let solving = false;
+let solveIndex = 0;
+
 function setup() {
     let mazeContainer = select('#mazeContainer');
     let canvas = createCanvas(900, 900);
     canvas.parent(mazeContainer);
     
-    cols = floor(width / w); // X-direction (left to right)
-    rows = floor(height / w); // Y-direction (top to bottom)
+    cols = floor(width / w);
+    rows = floor(height / w);
 
     console.log(`Canvas size: ${width}x${height}, Cols (X): ${cols}, Rows (Y): ${rows}`);
 
     select('#startMazeBtn').mousePressed(startMaze);
     select('#restartMazeBtn').mousePressed(restartMaze);
+    select('#solveMazeBtn').mousePressed(solveMaze);
+    select('#infoBtn').mousePressed(showInfo); // New button handler
 
     resetGrid();
 
     document.addEventListener('keydown', function (event) {
-        if (!mazeGenerating && !reachedEnd) {
+        if (!mazeGenerating && !reachedEnd && !solving) {
             switch (event.key) {
-                case 'ArrowUp': movePlayer(0, -1); break;    // Y up
-                case 'ArrowDown': movePlayer(0, 1); break;   // Y down
-                case 'ArrowLeft': movePlayer(-1, 0); break;  // X left
-                case 'ArrowRight': movePlayer(1, 0); break;  // X right
+                case 'ArrowUp': movePlayer(0, -1); break;
+                case 'ArrowDown': movePlayer(0, 1); break;
+                case 'ArrowLeft': movePlayer(-1, 0); break;
+                case 'ArrowRight': movePlayer(1, 0); break;
             }
         }
     });
 }
 
 function resetGrid() {
-    grid = new Array(rows); // Rows = Y
+    grid = new Array(rows);
     stack = [];
     path = [];
+    solutionPath = [];
     reachedEnd = false;
+    moveCount = 0;
+    solving = false;
+    solveIndex = 0;
     
     for (var y = 0; y < rows; y++) {
         grid[y] = new Array(cols);
         for (var x = 0; x < cols; x++) {
-            grid[y][x] = new Cell(x, y); // x = col, y = row
+            grid[y][x] = new Cell(x, y);
         }
     }
 
-    playerX = floor(random(0, cols)); // Random X (column)
-    playerY = 0;                      // Top Y (row)
+    playerX = floor(random(0, cols));
+    playerY = 0;
     current = grid[playerY][playerX];
     current.visited = true;
     console.log(`Starting cell: X=${playerX}, Y=${playerY}`);
     path.push(current);
+    solutionPath.push(current);
 
-    let endX = floor(random(0, cols)); // Random X for end
-    endCell = grid[rows - 1][endX];    // Bottom row (Y=29), random X
+    let endX = floor(random(0, cols));
+    endCell = grid[rows - 1][endX];
     console.log(`Ending cell: X=${endX}, Y=${rows - 1}`);
 }
 
@@ -83,7 +96,36 @@ function restartMaze() {
     timerRunning = false;
     mazeGenerating = false;
     updateTimerDisplay("10:00");
+    moveCount = 0;
     resetGrid();
+}
+
+function solveMaze() {
+    if (!mazeGenerating && !reachedEnd && !solving) {
+        solving = true;
+        solveIndex = 0;
+        playerX = solutionPath[0].x; // Reset player to start
+        playerY = solutionPath[0].y;
+        console.log("Starting solve animation");
+    }
+}
+
+function showInfo() {
+    Swal.fire({
+        title: "Street Maze Rules & Info",
+        html: `
+            <ul style="text-align: left;">
+                <li>Use arrow keys to move the red square from the top to the green endpoint at the bottom.</li>
+                <li>You have 10 minutes to reach the end before time runs out.</li>
+                <li><strong>Start:</strong> Generates a new maze.</li>
+                <li><strong>Restart:</strong> Resets the maze and timer.</li>
+                <li><strong>Solve:</strong> Animates the solution path from start to the endpoint.</li>
+                <li>Moves and time taken are shown when you win or solve the maze.</li>
+            </ul>
+        `,
+        icon: "info",
+        confirmButtonText: "Got It!"
+    });
 }
 
 function updateTimer() {
@@ -132,7 +174,7 @@ function draw() {
         blinkTimer = 0;
     }
 
-    // Draw player (red square, no blinking)
+    // Draw player (red square)
     fill(255, 0, 0);
     noStroke();
     rect(playerX * w + w / 2 - 10, playerY * w + w / 2 - 10, 20, 20);
@@ -145,12 +187,6 @@ function draw() {
         }
     }
 
-    // Draw end point (green square)
-    if (endCell) {
-        fill(0, 255, 0, 100);
-        rect(endCell.x * w + w / 2 - 10, endCell.y * w + w / 2 - 10, 20, 20);
-    }
-
     if (mazeGenerating) {
         current.visited = true;
         current.highlight();
@@ -158,10 +194,21 @@ function draw() {
         if (next) {
             next.visited = true;
             stack.push(current);
+            // Manage solutionPath
+            if (solutionPath[solutionPath.length - 1] !== endCell) {
+                solutionPath.push(next);
+                if (next === endCell) {
+                    console.log("Endpoint reached, solution path saved.");
+                }
+            }
             removeWalls(current, next);
             current = next;
         } else if (stack.length > 0) {
             current = stack.pop();
+            // Trim solutionPath if backtracking before reaching end
+            if (solutionPath.length > 1 && solutionPath[solutionPath.length - 1] !== endCell) {
+                solutionPath.pop();
+            }
         } else {
             mazeGenerating = false;
             if (!timerRunning) {
@@ -172,31 +219,61 @@ function draw() {
             console.log("Maze generation complete.");
         }
     }
+
+    // Handle solve animation
+    if (solving) {
+        if (frameCount % 10 === 0) { // Slow down animation (~166ms at 60fps)
+            if (solveIndex < solutionPath.length) {
+                playerX = solutionPath[solveIndex].x;
+                playerY = solutionPath[solveIndex].y;
+                solveIndex++;
+            } else {
+                solving = false;
+                if (playerX === endCell.x && playerY === endCell.y) {
+                    reachedEnd = true;
+                    timerRunning = false;
+                    const elapsedTime = floor((Date.now() - startTime) / 1000);
+                    const minutes = floor(elapsedTime / 60);
+                    const seconds = elapsedTime % 60;
+                    const timeTaken = `${minutes}:${String(seconds).padStart(2, '0')}`;
+                    Swal.fire({
+                        title: "Maze Solved!",
+                        text: `Solution completed!\nMoves: ${moveCount}\nTime: ${timeTaken}`,
+                        icon: "success",
+                        confirmButtonText: "Play Again",
+                    }).then((result) => {
+                        if (result.isConfirmed) restartMaze();
+                    });
+                }
+            }
+        }
+    }
 }
 
 function movePlayer(dx, dy) {
-    let newX = playerX + dx; // X = columns (left-right)
-    let newY = playerY + dy; // Y = rows (top-bottom)
+    let newX = playerX + dx;
+    let newY = playerY + dy;
 
     if (newX >= 0 && newX < cols && newY >= 0 && newY < rows) {
         let currentCell = grid[playerY][playerX];
         let nextCell = grid[newY][newX];
 
         let canMove = false;
-        if (dx > 0 && !currentCell.walls[1] && !nextCell.walls[3]) {       // Right
+        if (dx > 0 && !currentCell.walls[1] && !nextCell.walls[3]) {
             canMove = true;
-        } else if (dx < 0 && !currentCell.walls[3] && !nextCell.walls[1]) { // Left
+        } else if (dx < 0 && !currentCell.walls[3] && !nextCell.walls[1]) {
             canMove = true;
-        } else if (dy > 0 && !currentCell.walls[2] && !nextCell.walls[0]) { // Down
+        } else if (dy > 0 && !currentCell.walls[2] && !nextCell.walls[0]) {
             canMove = true;
-        } else if (dy < 0 && !currentCell.walls[0] && !nextCell.walls[2]) { // Up
+        } else if (dy < 0 && !currentCell.walls[0] && !nextCell.walls[2]) {
             canMove = true;
         }
 
         if (canMove) {
             playerX = newX;
             playerY = newY;
-            console.log(`Moved to: X=${playerX}, Y=${playerY}`);
+            moveCount++;
+            console.log(`Moved to: X=${playerX}, Y=${playerY}, Moves: ${moveCount}`);
 
             let nextCell = grid[playerY][playerX];
             if (!reachedEnd && nextCell && !path.includes(nextCell)) {
@@ -204,10 +281,14 @@ function movePlayer(dx, dy) {
             }
             if (nextCell === endCell) {
                 reachedEnd = true;
-                console.log("Endpoint reached!");
+                timerRunning = false;
+                const elapsedTime = floor((Date.now() - startTime) / 1000);
+                const minutes = floor(elapsedTime / 60);
+                const seconds = elapsedTime % 60;
+                const timeTaken = `${minutes}:${String(seconds).padStart(2, '0')}`;
                 Swal.fire({
                     title: "Congratulations!",
-                    text: "You reached the end!",
+                    text: `You reached the end!\nMoves: ${moveCount}\nTime: ${timeTaken}`,
                     icon: "success",
                     confirmButtonText: "Play Again",
                 }).then((result) => {
@@ -230,27 +311,27 @@ function index(x, y) {
 }
 
 function removeWalls(a, b) {
-    var dx = a.x - b.x; // X difference (columns)
+    var dx = a.x - b.x;
     if (dx === 1) {
-        a.walls[3] = false; // Left of a
-        b.walls[1] = false; // Right of b
+        a.walls[3] = false;
+        b.walls[1] = false;
     } else if (dx === -1) {
-        a.walls[1] = false; // Right of a
-        b.walls[3] = false; // Left of b
+        a.walls[1] = false;
+        b.walls[3] = false;
     }
-    var dy = a.y - b.y; // Y difference (rows)
+    var dy = a.y - b.y;
     if (dy === 1) {
-        a.walls[0] = false; // Top of a
-        b.walls[2] = false; // Bottom of b
+        a.walls[0] = false;
+        b.walls[2] = false;
     } else if (dy === -1) {
-        a.walls[2] = false; // Bottom of a
-        b.walls[0] = false; // Top of b
+        a.walls[2] = false;
+        b.walls[0] = false;
     }
 }
 
 function Cell(x, y) {
-    this.x = x;          // Column index (X, left-right)
-    this.y = y;          // Row index (Y, top-bottom)
+    this.x = x;
+    this.y = y;
     this.walls = [true, true, true, true]; // top, right, bottom, left
     this.visited = false;
 
@@ -263,7 +344,7 @@ function Cell(x, y) {
 
         if (top && !top.visited) neighbors.push(top);
         if (right && !right.visited) neighbors.push(right);
-        if (bottom && !bottom.visited) neighbors.push(bottom); // Fixed to bottom
+        if (bottom && !bottom.visited) neighbors.push(bottom); // Should be bottom
         if (left && !left.visited) neighbors.push(left);
 
         if (neighbors.length > 0) {
