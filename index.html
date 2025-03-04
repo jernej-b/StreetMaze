@@ -1,26 +1,29 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Street Maze</title>
     <link rel="icon" href="img/moonfav.png" type="image/x-icon">
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Magic Maze</title>
-  <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.2/p5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body>
-  <div id="page">
-    <div id="menu">
-      <input id="startMazeBtn" type="button" value="Start" />
-      <input id="restartMazeBtn" type="button" value="Restart" />
-      <div id="timer">Time: 10:00</div>
+    <div id="page">
+        <div id="menu">
+            <input id="startMazeBtn" type="button" value="Start" />
+            <input id="restartMazeBtn" type="button" value="Restart" />
+            <input id="solveMazeBtn" type="button" value="Solve" />
+             <input id="infoBtn" type="button" value="Info" />
+            <div id="timer">Time: 10:00</div>
+        </div>
+       <div id="view">
+            <div id="mazeContainer"></div>
+        </div>
+
     </div>
-    <div id="view">
-      <div id="mazeContainer">
-              </div>
-    </div>
-  </div>
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
-  <script src="js/script.js"></script>
+    <script src="js/script.js"></script>
+    
 </body>
 </html>
