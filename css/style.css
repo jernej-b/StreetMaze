@@ -20,6 +20,7 @@ html, body {
 #mazeCanvas {
   border: solid 2px black;
   background-color: white;
+  box-shadow: 0 0 35px rgba(0, 200, 0, 0.8);
 }
 
 input[type="button"] {
@@ -54,4 +55,5 @@ input[type="button"]:focus {
   margin-top: 10px;
   font-size: 20px;
   font-weight: bold;
+  color:white;
 }
