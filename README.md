@@ -1,11 +1,9 @@
-**Street Maze**
+***Street Maze***
 
-A  maze game built with p5.js. Navigate through a randomly generated maze using arrow keys to reach the endpoint before the 10-minute timer runs out. Features include:
+Navigate through a maze using arrow keys to reach the endpoint before the 10-minute timer runs out. Features include:
 
--Random maze generation using depth-first search.
+Arrow key controls for movement.
 
--Arrow key controls for movement.
+Restart button to reset the game.
 
--Blinking endpoint and timer.
-
--Restart button to reset the game.
+Solve button to animate a predefined solution path.
