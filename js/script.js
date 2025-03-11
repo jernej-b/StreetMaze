@@ -253,8 +253,7 @@ function showInfo() {
                 <li>Reach the green endpoint in 10 minutes.</li>
                 <li><strong>Start:</strong> Begins the timer.</li>
                 <li><strong>Restart:</strong> Resets everything.</li>
-                <li><strong>Solve:</strong> Shows the solution path.</li>
-                <li>Moves and time shown on completion.</li>
+                <li><strong>Solve:</strong> Solves the maze.</li>
             </ul>
         `,
         icon: "info",
